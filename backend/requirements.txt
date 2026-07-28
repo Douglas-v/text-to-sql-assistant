@@ -1,0 +1,19 @@
+# ============================================================
+# requirements.txt — Dependências do Backend (Text-to-SQL)
+# ============================================================
+
+# Framework Web assíncrono de alta performance
+fastapi==0.115.6
+
+# Servidor ASGI para rodar o FastAPI
+uvicorn[standard]==0.32.1
+
+# SDK oficial do Google Gemini
+google-genai>=1.65.0
+
+# Suporte a variáveis de ambiente via arquivo .env
+python-dotenv==1.0.1
+
+# Middleware CORS (necessário para o frontend Next.js acessar a API)
+# Já incluso no FastAPI, listado aqui para documentar a dependência
+# fastapi já inclui o CORSMiddleware internamente
