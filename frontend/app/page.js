@@ -1,21 +1,20 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Header from '../components/Header';
-import ChatInput from '../components/ChatInput';
+import Header from '../components/ui/Header';
+import ChatInput from '../components/ui/ChatInput';
 import QueryResponseView from '../components/QueryResponseView';
-import SecurityBadge from '../components/SecurityBadge';
+import SecurityBadge from '../components/ui/SecurityBadge';
 import { Database, AlertCircle, RefreshCw, Trash2, MessageSquare, User, Bot, Loader2 } from 'lucide-react';
 
 const API_BASE = 'http://localhost:8000';
 
 export default function Home() {
-  const [backendStatus, setBackendStatus] = useState('checking'); // 'online' | 'offline' | 'checking'
+  const [backendStatus, setBackendStatus] = useState('checking');
   const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState([]); // Histórico de mensagens do chat
+  const [messages, setMessages] = useState([]);
   const chatBottomRef = useRef(null);
 
-  // Check health of backend on load
   const checkBackendHealth = async () => {
     setBackendStatus('checking');
     try {
@@ -35,7 +34,6 @@ export default function Home() {
     checkBackendHealth();
   }, []);
 
-  // Rola para a mensagem mais recente quando o histórico for atualizado
   useEffect(() => {
     if (messages.length > 0) {
       chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -51,9 +49,7 @@ export default function Home() {
     try {
       const res = await fetch(`${API_BASE}/api/query`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pergunta: questionText }),
       });
 
@@ -61,7 +57,7 @@ export default function Home() {
 
       if (!res.ok) {
         if (res.status === 403) {
-          // Erro de Segurança 403
+          // 403 = SQL Mutation Guard bloqueou a query antes de chegar ao banco.
           setMessages((prev) => [
             ...prev,
             {
@@ -119,13 +115,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#090d16] text-slate-100 selection:bg-blue-600 selection:text-white">
-      {/* Header Bar */}
       <Header backendStatus={backendStatus} />
 
-      {/* Main Content Container */}
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6 flex flex-col">
 
-        {/* Backend Offline Warning Banner */}
         {backendStatus === 'offline' && (
           <div className="w-full p-4 rounded-xl bg-amber-950/30 border border-amber-500/30 text-amber-300 text-xs flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
@@ -141,7 +134,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Hero Welcome Banner (quando não há mensagens) */}
         {messages.length === 0 && (
           <div className="text-center max-w-2xl mx-auto space-y-4 py-8">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-semibold text-blue-400">
@@ -156,7 +148,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Action Header for Chat History */}
         {messages.length > 0 && (
           <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
@@ -173,12 +164,10 @@ export default function Home() {
           </div>
         )}
 
-        {/* CHAT MESSAGES FEED */}
         <div className="flex-1 space-y-8 min-h-[200px]">
           {messages.map((msg) => (
             <div key={msg.id} className="space-y-4 animate-in fade-in slide-in-from-bottom-3 duration-300">
 
-              {/* User Question Bubble */}
               <div className="flex items-start justify-end gap-3">
                 <div className="bg-blue-600/90 border border-blue-500/40 text-white rounded-2xl rounded-tr-none px-4 py-3 max-w-2xl shadow-lg">
                   <div className="flex items-center justify-between gap-4 text-[10px] text-blue-200 mb-1">
@@ -192,7 +181,6 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* AI / System Response View */}
               <div className="flex items-start gap-3">
                 <div className="p-2 rounded-full bg-indigo-600 text-white shrink-0 shadow-md">
                   <Bot className="w-4 h-4" />
@@ -221,7 +209,6 @@ export default function Home() {
             </div>
           ))}
 
-          {/* Loading Indicator for Ongoing Query */}
           {isLoading && (
             <div className="flex items-center gap-3 animate-pulse">
               <div className="p-2 rounded-full bg-indigo-600/80 text-white shrink-0 shadow-md">
@@ -237,14 +224,12 @@ export default function Home() {
           <div ref={chatBottomRef} />
         </div>
 
-        {/* Input Bar (Sempre visível) */}
         <div className="sticky bottom-4 z-40 pt-2">
           <ChatInput onSendQuery={handleSendQuery} isLoading={isLoading} />
         </div>
 
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-slate-800/80 py-4 text-center text-xs text-slate-500">
         <p>Data Intelligence Assistant — Text-to-SQL (FastAPI + Next.js + Gemini)</p>
       </footer>

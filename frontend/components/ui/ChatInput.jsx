@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Send, Sparkles, Loader2, Lightbulb } from 'lucide-react';
 
 const SUGGESTIONS = [
-  { label: 'Top 5 Produtos Vendidos', query: 'Quais são os 5 produtos mais vendidos em quantidade?' },
+  { label: 'Top 3 Produtos Vendidos', query: 'Quais são os 3 produtos mais vendidos em quantidade?' },
   { label: 'Diferença em Relação ao Mês Anterior', query: 'Mostre o faturamento total mês a mês e a diferença de valor em relação ao mês anterior.' },
   { label: 'Distribuição dos Tipos de Pagamento', query: 'Qual o valor total de vendas acumulado por cada tipo de pagamento?' },
   { label: 'Evolução Mensal', query: 'Qual a evolução do faturamento total de vendas por mês?' },
