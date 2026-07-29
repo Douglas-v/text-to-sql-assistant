@@ -27,7 +27,8 @@ text-to-sql/
 │   ├── database.py           # Geração idempotente do SQLite (150 registros) e execução de queries
 │   ├── test_backend.py       # Testes unitários do SQL Guard e testes de integração da API
 │   ├── requirements.txt      # Dependências Python
-│   └── .env                  # Chave GEMINI_API_KEY (não versionado)
+│   ├── .env.example          # Modelo de variáveis de ambiente (UTF-8)
+│   └── .env                  # Chave GEMINI_API_KEY (criado a partir do .env.example, não versionado)
 └── frontend/                 # Interface Next.js (App Router)
     ├── app/
     │   ├── page.js           # Página principal (Chat feed, histórico e estado global)
@@ -61,8 +62,25 @@ text-to-sql/
 ## Pré-requisitos
 
 - **Python 3.11+**
-- **Node.js 18+**
+- **Node.js 18+ e npm**
 - **Chave de API do Google Gemini** (`GEMINI_API_KEY`)
+
+### Solução de Problemas no Windows
+
+Caso encontre dificuldades ao configurar a aplicação no Windows (PowerShell / CMD), siga as orientações abaixo:
+
+1. **Node.js ou npm não reconhecidos:**
+   Caso os comandos `node` ou `npm` não sejam identificados no terminal, instale a versão Node.js LTS utilizando o gerenciador de pacotes do Windows:
+   ```powershell
+   winget install OpenJS.NodeJS.LTS
+   ```
+   *(Feche e reabra o terminal após a conclusão da instalação).*
+
+2. **Erro de Execução de Scripts no PowerShell (`PSSecurityException`):**
+   Se o PowerShell bloquear a execução de scripts com erros de política de segurança (`ps1 cannot be loaded`), altere a política de execução para o usuário atual executando:
+   ```powershell
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+   ```
 
 ---
 
@@ -76,8 +94,13 @@ cd backend
 # Instalar dependências
 pip install -r requirements.txt
 
-# Criar o arquivo .env com sua chave da Gemini API
-echo GEMINI_API_KEY=sua_chave_aqui > .env
+# Copiar o modelo de variáveis de ambiente (.env.example) removendo a extensão .example:
+cp .env.example .env     # Linux / macOS / Git Bash
+# Ou no Windows (PowerShell):
+copy .env.example .env
+
+# Abra o arquivo .env gerado e insira sua chave da Gemini API:
+# GEMINI_API_KEY=sua_chave_aqui
 
 # Executar a suíte de testes (opcional)
 python test_backend.py
@@ -86,7 +109,7 @@ python test_backend.py
 python -m uvicorn main:app --reload
 ```
 
-> **Nota:** O banco `vendas_ficticias.db` é criado e populado automaticamente na primeira inicialização da aplicação. Se a sua chave atingir o limite de cota (HTTP 429), substitua a variável `GEMINI_API_KEY` em `backend/.env`.
+> **Nota:** Recomendamos utilizar o arquivo `.env.example` preenchendo a sua chave no `.env` gerado (removendo a extensão `.example`). Isso garante a codificação correta em **UTF-8**, evitando problemas de *encoding* (UTF-16LE) gerados por comandos como `echo > .env` no PowerShell do Windows. O banco `vendas_ficticias.db` é criado e populado automaticamente na primeira inicialização da aplicação. Se a sua chave atingir o limite de cota (HTTP 429), substitua a variável `GEMINI_API_KEY` em `backend/.env`.
 
 ### 2. Frontend (Next.js)
 
