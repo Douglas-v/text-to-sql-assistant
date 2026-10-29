@@ -5,8 +5,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from database import gerar_dados, get_ddl, executar_query
-from gemini_service import processar_pergunta
+from app.db.database import gerar_dados, get_ddl, executar_query
+from app.services.gemini import processar_pergunta
 
 
 # DDL carregado uma única vez no startup para evitar leituras repetidas ao SQLite por requisição.

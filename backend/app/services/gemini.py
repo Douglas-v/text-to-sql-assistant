@@ -99,19 +99,8 @@ Se a pergunta pedir para deletar/alterar dados ou se não for possível responde
 """
 
 
-def processar_pergunta(pergunta: str, ddl: str) -> dict:
-    """Orquestra o fluxo Text-to-SQL: Gemini → parse JSON → validação de segurança."""
-
-    # Atalho de segurança: dispara o guard antes de chamar o Gemini quando a própria
-    # pergunta do usuário contém palavras-chave de mutação (botão de teste ou input malicioso).
-    if any(kw in pergunta.upper() for kw in ["DELETE", "DROP TABLE", "UPDATE VENDAS", "TRUNCATE"]):
-        sql_tentativa = (
-            pergunta
-            if pergunta.upper().startswith(("DELETE", "DROP", "UPDATE", "INSERT"))
-            else "DELETE FROM vendas WHERE 1=1"
-        )
-        validar_sql(sql_tentativa)
-
+def _chamar_gemini(pergunta: str, ddl: str) -> dict:
+    """Chama o Gemini e devolve o JSON já decodificado (`sql` e `sintese`), ainda sem validação."""
     cliente = _criar_cliente()
 
     try:
@@ -131,7 +120,7 @@ def processar_pergunta(pergunta: str, ddl: str) -> dict:
         ) from exc
 
     try:
-        dados = json.loads(resposta.text.strip())
+        return json.loads(resposta.text.strip())
     except json.JSONDecodeError as exc:
         raise HTTPException(
             status_code=400,
@@ -140,6 +129,22 @@ def processar_pergunta(pergunta: str, ddl: str) -> dict:
                 f"Resposta recebida: {resposta.text.strip()[:300]}"
             ),
         ) from exc
+
+
+def processar_pergunta(pergunta: str, ddl: str) -> dict:
+    """Orquestra o fluxo Text-to-SQL: Gemini → parse JSON → validação de segurança."""
+
+    # Atalho de demonstração: dispara o guard antes de chamar o Gemini quando a própria
+    # pergunta do usuário contém palavras-chave de mutação (botão de teste ou input malicioso).
+    if any(kw in pergunta.upper() for kw in ["DELETE", "DROP TABLE", "UPDATE VENDAS", "TRUNCATE"]):
+        sql_tentativa = (
+            pergunta
+            if pergunta.upper().startswith(("DELETE", "DROP", "UPDATE", "INSERT"))
+            else "DELETE FROM vendas WHERE 1=1"
+        )
+        validar_sql(sql_tentativa)
+
+    dados = _chamar_gemini(pergunta, ddl)
 
     return {
         "sql": validar_sql(dados.get("sql", "").strip()),
