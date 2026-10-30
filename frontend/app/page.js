@@ -9,6 +9,17 @@ import { Database, AlertCircle, RefreshCw, Trash2, MessageSquare, User, Bot, Loa
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+async function fetchBackendStatus() {
+  try {
+    const res = await fetch(`${API_BASE}/api/health`);
+    if (!res.ok) return 'offline';
+    const data = await res.json();
+    return data.status === 'ok' ? 'online' : 'offline';
+  } catch {
+    return 'offline';
+  }
+}
+
 export default function Home() {
   const [backendStatus, setBackendStatus] = useState('checking');
   const [isLoading, setIsLoading] = useState(false);
@@ -17,21 +28,18 @@ export default function Home() {
 
   const checkBackendHealth = async () => {
     setBackendStatus('checking');
-    try {
-      const res = await fetch(`${API_BASE}/api/health`);
-      if (res.ok) {
-        const data = await res.json();
-        setBackendStatus(data.status === 'ok' ? 'online' : 'offline');
-      } else {
-        setBackendStatus('offline');
-      }
-    } catch (err) {
-      setBackendStatus('offline');
-    }
+    setBackendStatus(await fetchBackendStatus());
   };
 
+  // Verificação inicial: o estado já nasce como 'checking', então só atualiza quando a resposta chega.
   useEffect(() => {
-    checkBackendHealth();
+    let active = true;
+    fetchBackendStatus().then((status) => {
+      if (active) setBackendStatus(status);
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {

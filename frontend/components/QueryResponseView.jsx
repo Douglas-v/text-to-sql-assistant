@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Sparkles,
   Code2,
@@ -14,21 +14,21 @@ import DynamicChart from './charts/DynamicChart';
 import { formatTableCell, formatColumnHeader } from '../lib/formatters';
 
 export default function QueryResponseView({ responseData, question }) {
-  const [showSql, setShowSql] = useState(true);
-  const [activeView, setActiveView] = useState('chart');
-  const [page, setPage] = useState(1);
-  const rowsPerPage = 10;
-
   if (!responseData) return null;
 
+  // `key` remonta o conteúdo a cada nova query, reiniciando aba ativa e paginação.
+  return <QueryResponseContent key={responseData.sql} responseData={responseData} question={question} />;
+}
+
+function QueryResponseContent({ responseData, question }) {
   const { sql, sintese, columns, rows, total_registros } = responseData;
 
   const isScalarResult = rows?.length === 1 && columns?.length === 1;
 
-  useEffect(() => {
-    setActiveView(isScalarResult ? 'table' : 'chart');
-    setPage(1);
-  }, [isScalarResult, sql]);
+  const [showSql, setShowSql] = useState(true);
+  const [activeView, setActiveView] = useState(isScalarResult ? 'table' : 'chart');
+  const [page, setPage] = useState(1);
+  const rowsPerPage = 10;
 
   const totalPages = Math.ceil((rows?.length || 0) / rowsPerPage);
   const paginatedRows = rows?.slice((page - 1) * rowsPerPage, page * rowsPerPage) || [];
