@@ -76,7 +76,7 @@ def get_ddl() -> str:
     cursor = conn.cursor()
     cursor.execute("""
         SELECT sql FROM sqlite_master
-        WHERE type = 'table' AND sql IS NOT NULL
+        WHERE type = 'table' AND sql IS NOT NULL AND name NOT LIKE 'sqlite_%'
         ORDER BY name
     """)
     rows = cursor.fetchall()

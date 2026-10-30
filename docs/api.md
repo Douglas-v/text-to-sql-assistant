@@ -28,6 +28,7 @@ Documentação interativa (Swagger) em `http://localhost:8000/docs` com o backen
 | `400` | O Gemini retornou algo que não é JSON válido |
 | `403` | SQL bloqueado pelo guard (mutação ou query que não inicia com `SELECT`/`WITH`) |
 | `422` | Payload inválido (ex.: pergunta com menos de 5 caracteres) |
+| `503` | `GEMINI_API_KEY` não configurada |
 | `500` | Falha de comunicação com o Gemini ou erro de execução no SQLite |
 
 ## Camadas de segurança

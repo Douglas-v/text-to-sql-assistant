@@ -15,13 +15,16 @@ DEFAULT_GEMINI_MODEL = "gemini-flash-latest"
 def _criar_cliente() -> genai.Client:
     """
     Instancia o cliente Gemini usando GEMINI_API_KEY do ambiente.
-    Falha em RuntimeError se a variável não estiver definida.
+    Responde HTTP 503 (com mensagem clara) se a variável não estiver definida.
     """
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
-        raise RuntimeError(
-            "Variável de ambiente GEMINI_API_KEY não encontrada. "
-            "Verifique o arquivo backend/.env"
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "GEMINI_API_KEY não configurada. "
+                "Crie o arquivo backend/.env a partir de backend/.env.example."
+            ),
         )
     return genai.Client(api_key=api_key)
 

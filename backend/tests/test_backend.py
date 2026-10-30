@@ -70,6 +70,12 @@ def test_executar_query_retorna_colunas_e_linhas(banco_temporario):
     assert len(resultado["rows"]) == 3
 
 
+def test_ddl_nao_inclui_tabelas_internas_do_sqlite(banco_temporario):
+    ddl = database.get_ddl()
+    assert "CREATE TABLE vendas" in ddl
+    assert "sqlite_sequence" not in ddl
+
+
 def test_conexao_e_somente_leitura(banco_temporario):
     """Mesmo que o guard falhe, o driver impede qualquer escrita."""
     with pytest.raises(sqlite3.OperationalError):
@@ -123,6 +129,13 @@ def test_query_com_mutacao_gerada_pelo_llm_retorna_403(client, monkeypatch):
     _mock_gemini(monkeypatch, "DELETE FROM vendas")
     resp = client.post("/api/query", json={"pergunta": "Apague tudo por favor"})
     assert resp.status_code == 403
+
+
+def test_sem_chave_de_api_retorna_503_claro(client, monkeypatch):
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    resp = client.post("/api/query", json={"pergunta": "Quais os produtos mais vendidos?"})
+    assert resp.status_code == 503
+    assert "GEMINI_API_KEY" in resp.json()["detail"]
 
 
 def test_pergunta_curta_demais_retorna_422(client):
