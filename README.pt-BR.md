@@ -12,6 +12,19 @@
 
 > Faça perguntas sobre dados de vendas em linguagem natural. O LLM escreve o SQL, uma **camada de segurança o valida**, o banco o executa em **modo somente leitura** e a interface exibe síntese, tabela paginada e gráficos.
 
+## Demonstração
+
+![Visão em gráfico: síntese, SQL gerado e gráfico dinâmico](docs/img/01-chat-grafico.png)
+
+<details>
+<summary>Mais capturas de tela</summary>
+
+![Tabela paginada com exportação CSV](docs/img/02-tabela.png)
+
+![Bloqueio HTTP 403 pelo SQL Guard](docs/img/03-bloqueio-seguranca.png)
+
+</details>
+
 ## O problema de engenharia
 
 Deixar um LLM gerar SQL que roda em um banco real é arriscado: o modelo pode inventar colunas, devolver uma saída malformada ou, pior, gerar comandos destrutivos (`DROP`, `DELETE`), por erro ou por um prompt malicioso.

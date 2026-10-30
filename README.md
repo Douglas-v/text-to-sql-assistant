@@ -12,6 +12,19 @@
 
 > Ask questions about sales data in natural language. The LLM writes the SQL, a **security layer validates it**, the database runs it **read-only**, and the UI shows a summary, a paginated table and charts.
 
+## Demo
+
+![Chart view: summary, generated SQL and dynamic chart](docs/img/01-chat-grafico.png)
+
+<details>
+<summary>More screenshots</summary>
+
+![Paginated table with CSV export](docs/img/02-tabela.png)
+
+![HTTP 403 block by the SQL Guard](docs/img/03-bloqueio-seguranca.png)
+
+</details>
+
 ## The engineering problem
 
 Letting an LLM generate SQL that runs against a real database is risky: the model can hallucinate columns, return malformed output or, worse, produce destructive statements (`DROP`, `DELETE`) — by mistake or through a malicious prompt.
