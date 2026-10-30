@@ -33,7 +33,7 @@ export default function Header({ backendStatus }) {
           {/* AI Model Badge */}
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 text-slate-300">
             <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-            <span className="font-medium">Gemini 3 Flash</span>
+            <span className="font-medium">Gemini Flash</span>
           </div>
 
           {/* Security Guard Badge */}

@@ -151,7 +151,7 @@ export default function Home() {
               Chat Interativo de <span className="gradient-text">Inteligência de Dados</span>
             </h2>
             <p className="text-sm text-slate-400 leading-relaxed">
-              Faça perguntas em linguagem natural e acompanhe todo o histórico da conversa com análises textuais geradas pelo <strong className="text-slate-200">Gemini 3 Flash</strong>, consultas SQL validadas, tabelas e gráficos dinâmicos.
+              Faça perguntas em linguagem natural e acompanhe todo o histórico da conversa com análises textuais geradas pelo <strong className="text-slate-200">Gemini Flash</strong>, consultas SQL validadas, tabelas e gráficos dinâmicos.
             </p>
           </div>
         )}
