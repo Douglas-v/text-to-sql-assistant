@@ -12,3 +12,4 @@ Protótipo funcional, construído sobre uma base fictícia. Itens para levá-lo 
 | 6 | Avaliação de acurácia | Validação manual | Dataset de perguntas com SQL esperado (*execution accuracy*) rodando no CI |
 | 7 | Containerização | Execução manual (venv + npm) | `Dockerfile` + `docker-compose.yml` (planejado) |
 | 8 | Guard SQL | Regex + conexão somente leitura | Parser SQL real (ex.: `sqlglot`) para validar a AST |
+| 9 | Síntese baseada nos dados | O Gemini gera SQL e síntese na mesma chamada, antes da execução; a síntese descreve a consulta, não os valores retornados | Segunda chamada enviando as linhas (amostra) ao modelo para resumir o resultado real |

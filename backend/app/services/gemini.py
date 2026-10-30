@@ -9,7 +9,8 @@ from fastapi import HTTPException
 
 load_dotenv()
 
-DEFAULT_GEMINI_MODEL = "gemini-flash-latest"
+DEFAULT_GEMINI_MODEL = "gemini-3.5-flash"
+GEMINI_TIMEOUT_MS = 30_000  # evita requisições penduradas se o modelo não responder
 
 
 def _criar_cliente() -> genai.Client:
@@ -26,7 +27,10 @@ def _criar_cliente() -> genai.Client:
                 "Crie o arquivo backend/.env a partir de backend/.env.example."
             ),
         )
-    return genai.Client(api_key=api_key)
+    return genai.Client(
+        api_key=api_key,
+        http_options=types.HttpOptions(timeout=GEMINI_TIMEOUT_MS),
+    )
 
 
 _COMANDOS_PROIBIDOS = re.compile(

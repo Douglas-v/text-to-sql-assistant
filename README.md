@@ -76,7 +76,7 @@ The database is created and populated on first startup. Windows users: see [trou
 | Variable | Where | Required | Default | Description |
 |----------|-------|----------|---------|-------------|
 | `GEMINI_API_KEY` | `backend/.env` | yes | — | Gemini API key |
-| `GEMINI_MODEL` | `backend/.env` | no | `gemini-flash-latest` | Gemini model name |
+| `GEMINI_MODEL` | `backend/.env` | no | `gemini-3.5-flash` | Gemini model name |
 | `CORS_ORIGINS` | `backend/.env` | no | `http://localhost:3000,http://127.0.0.1:3000` | Allowed origins, comma-separated |
 | `DB_PATH` | `backend/.env` | no | `backend/vendas_ficticias.db` | SQLite file path |
 | `NEXT_PUBLIC_API_URL` | `frontend/.env.local` | no | `http://localhost:8000` | Backend base URL |

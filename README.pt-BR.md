@@ -76,7 +76,7 @@ O banco é criado e populado na primeira inicialização. Usuários de Windows: 
 | Variável | Onde | Obrigatória | Padrão | Descrição |
 |----------|------|-------------|--------|-----------|
 | `GEMINI_API_KEY` | `backend/.env` | sim | — | Chave da Gemini API |
-| `GEMINI_MODEL` | `backend/.env` | não | `gemini-flash-latest` | Nome do modelo Gemini |
+| `GEMINI_MODEL` | `backend/.env` | não | `gemini-3.5-flash` | Nome do modelo Gemini |
 | `CORS_ORIGINS` | `backend/.env` | não | `http://localhost:3000,http://127.0.0.1:3000` | Origens permitidas, separadas por vírgula |
 | `DB_PATH` | `backend/.env` | não | `backend/vendas_ficticias.db` | Caminho do arquivo SQLite |
 | `NEXT_PUBLIC_API_URL` | `frontend/.env.local` | não | `http://localhost:8000` | URL base do backend |
