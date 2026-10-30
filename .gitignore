@@ -1,9 +1,13 @@
 # Variáveis de ambiente (NUNCA commitar)
 backend/.env
 **/.env
+**/.env.local
 
 # Banco de dados gerado localmente
 backend/vendas_ficticias.db
+*.db
+*.sqlite
+*.sqlite3
 
 # Python
 __pycache__/
@@ -17,6 +21,11 @@ build/
 .venv/
 venv/
 env/
+
+# Testes
+.pytest_cache/
+.coverage
+htmlcov/
 
 # Node / Next.js
 frontend/node_modules/
