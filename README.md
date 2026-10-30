@@ -59,6 +59,7 @@ Requirements: Python 3.11+, Node.js 18+, a [Gemini API key](https://aistudio.goo
 ```bash
 # 1. Backend (terminal 1)
 cd backend
+python3 -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env          # then set GEMINI_API_KEY
 python -m uvicorn app.main:app --reload     # http://localhost:8000  (docs at /docs)
@@ -68,6 +69,8 @@ cd frontend
 npm install
 npm run dev                   # http://localhost:3000
 ```
+
+Linux/macOS: use `python3`. On Debian/Ubuntu you may need `sudo apt install python3-venv` first.
 
 The database is created and populated on first startup. Windows users: see [troubleshooting](docs/troubleshooting-windows.md). Docker support is planned.
 

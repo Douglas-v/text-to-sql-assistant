@@ -59,6 +59,7 @@ Requisitos: Python 3.11+, Node.js 18+ e uma [chave da Gemini API](https://aistud
 ```bash
 # 1. Backend (terminal 1)
 cd backend
+python3 -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env          # depois defina GEMINI_API_KEY
 python -m uvicorn app.main:app --reload     # http://localhost:8000  (docs em /docs)
@@ -68,6 +69,8 @@ cd frontend
 npm install
 npm run dev                   # http://localhost:3000
 ```
+
+Linux/macOS: use `python3`. No Debian/Ubuntu pode ser necessário `sudo apt install python3-venv` antes.
 
 O banco é criado e populado na primeira inicialização. Usuários de Windows: veja a [solução de problemas](docs/troubleshooting-windows.md). Suporte a Docker está planejado.
 
