@@ -109,7 +109,7 @@ async def query_endpoint(payload: QueryRequest):
 
     try:
         resultado_db = executar_query(sql_validado)
-    except sqlite3.Error as exc:
+    except (sqlite3.Error, sqlite3.Warning) as exc:
         raise HTTPException(
             status_code=500,
             detail=f"Erro ao executar a query no banco de dados: {str(exc)}",

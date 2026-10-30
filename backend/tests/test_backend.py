@@ -1,4 +1,6 @@
 """Testes do backend: SQL Guard (unitários) e endpoints (integração com Gemini mockado)."""
+import sqlite3
+
 import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
@@ -66,6 +68,18 @@ def test_executar_query_retorna_colunas_e_linhas(banco_temporario):
     resultado = database.executar_query("SELECT produto, total FROM vendas LIMIT 3")
     assert resultado["columns"] == ["produto", "total"]
     assert len(resultado["rows"]) == 3
+
+
+def test_conexao_e_somente_leitura(banco_temporario):
+    """Mesmo que o guard falhe, o driver impede qualquer escrita."""
+    with pytest.raises(sqlite3.OperationalError):
+        database.executar_query("DELETE FROM vendas")
+    assert database.executar_query("SELECT COUNT(*) FROM vendas")["rows"][0][0] == 150
+
+
+def test_driver_rejeita_multiplos_statements(banco_temporario):
+    with pytest.raises((sqlite3.Error, sqlite3.Warning)):
+        database.executar_query("SELECT 1; SELECT 2")
 
 
 # --------------------------------------------------------------------------- #

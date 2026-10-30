@@ -2,6 +2,7 @@ import sqlite3
 import random
 import os
 from datetime import datetime, timedelta
+from pathlib import Path
 
 DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "vendas_ficticias.db")
 
@@ -80,19 +81,29 @@ def get_ddl() -> str:
     return "\n\n".join(row[0] for row in rows)
 
 
+def _conectar_somente_leitura() -> sqlite3.Connection:
+    """Abre o SQLite em modo somente leitura (`mode=ro`): defesa real, no nível do driver."""
+    uri = Path(DB_PATH).resolve().as_uri() + "?mode=ro"
+    return sqlite3.connect(uri, uri=True)
+
+
 def executar_query(sql: str) -> dict:
     """
     Executa um SELECT no banco e retorna colunas e linhas em formato serializável.
     SQL vazio retorna resultado vazio sem abrir conexão.
+
+    A conexão é somente leitura e o driver do Python rejeita múltiplos statements,
+    complementando o SQL Guard baseado em regex (defesa em profundidade).
     """
     if not sql or not sql.strip():
         return {"columns": [], "rows": []}
 
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute(sql)
-    columns = [description[0] for description in cursor.description]
-    rows = [list(row) for row in cursor.fetchall()]
-    conn.close()
+    conn = _conectar_somente_leitura()
+    try:
+        cursor = conn.execute(sql)
+        columns = [description[0] for description in cursor.description]
+        rows = [list(row) for row in cursor.fetchall()]
+    finally:
+        conn.close()
 
     return {"columns": columns, "rows": rows}
