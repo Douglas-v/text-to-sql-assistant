@@ -1,193 +1,115 @@
-# Data Intelligence Assistant — Text-to-SQL
+# Text-to-SQL Assistant
 
-> Chat interativo que converte perguntas em linguagem natural em consultas SQL otimizadas, executa-as em um banco SQLite e apresenta os resultados com síntese inteligente do Google Gemini, tabelas paginadas, gráficos dinâmicos e controle de segurança contra mutações de dados.
+[![CI](https://github.com/Douglas-v/text-to-sql-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/Douglas-v/text-to-sql-assistant/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
+![Gemini](https://img.shields.io/badge/Google%20Gemini-4285F4?logo=google&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green)
 
----
+🇧🇷 [Leia em português](README.pt-BR.md)
 
-## Principais Recursos
+> Ask questions about sales data in natural language. The LLM writes the SQL, a **security layer validates it**, the database runs it **read-only**, and the UI shows a summary, a paginated table and charts.
 
-- **Chat Feed Interativo com Histórico:** Interface em formato de conversa contínua com carimbo de data/hora (*timestamps*), botão para limpar o histórico e sugestões rápidas de perguntas.
-- **SQL Security Mutation Guard (HTTP 403):** Camada de segurança rigorosa que inspeciona toda query SQL gerada. Bloqueia com status HTTP 403 qualquer comando de alteração de dados (`DROP`, `INSERT`, `UPDATE`, `DELETE`, `ALTER`, `CREATE`, `TRUNCATE`, etc.), permitindo exclusivamente consultas de leitura (`SELECT` e `WITH`).
-- **Síntese de Inteligência com Gemini 3 Flash:** Conexão otimizada via SDK `google-genai` com respostas estruturadas em JSON contendo o código SQL limpo e uma síntese amigável.
-- **Visualização Gráfica Dinâmica & Tabela Paginada:** Alternância simples entre tabela paginada (10 itens por página) e gráficos interativos (Barras, Linhas/Área ou Donut) desenvolvidos com Recharts.
-- **Formatação Inteligente de Dados (PT-BR):** Módulo centralizado (`formatters.js`) para tradução automática de colunas `snake_case` para português, formatação de valores monetários (R$), datas no padrão `DD/MM/AAAA` (sem desvio de fuso horário) e distinção entre valores de moeda e quantidades.
-- **Exportação de Dados para CSV:** Botão integrado na visualização de dados para exportação imediata das consultas em formato `.csv`.
-- **Otimização do Esquema do Banco de Dados:** O DDL é carregado na memória assim que a API é iniciada. Com isso, o backend não precisa consultar o banco de dados toda vez que o Gemini for gerar uma query, deixando a resposta mais rápida.
-- **Monitoramento de Saúde (Health Check):** Endpoint `GET /api/health` para verificação de status do backend e banco, com indicador dinâmico no cabeçalho.
+## The engineering problem
 
----
+Letting an LLM generate SQL that runs against a real database is risky: the model can hallucinate columns, return malformed output or, worse, produce destructive statements (`DROP`, `DELETE`) — by mistake or through a malicious prompt.
 
-## Arquitetura
+This project explores a minimal but defensible answer, in layers:
 
-```
-text-to-sql/
-├── backend/                  # API Python (FastAPI)
-│   ├── main.py               # Endpoints FastAPI, CORS, lifespan e cache de DDL
-│   ├── gemini_service.py     # SDK google-genai, prompt do sistema e SQL Security Guard
-│   ├── database.py           # Geração idempotente do SQLite (150 registros) e execução de queries
-│   ├── test_backend.py       # Testes unitários do SQL Guard e testes de integração da API
-│   ├── requirements.txt      # Dependências Python
-│   ├── .env.example          # Modelo de variáveis de ambiente (UTF-8)
-│   └── .env                  # Chave GEMINI_API_KEY (criado a partir do .env.example, não versionado)
-└── frontend/                 # Interface Next.js (App Router)
-    ├── app/
-    │   ├── page.js           # Página principal (Chat feed, histórico e estado global)
-    │   ├── layout.js         # Layout raiz (metadados, fontes)
-    │   └── globals.css       # Design System (Glassmorphism, tokens CSS, utilitários)
-    ├── components/
-    │   ├── QueryResponseView.jsx  # Card de resposta (Síntese, SQL, Tabela, Gráfico e CSV)
-    │   ├── charts/
-    │   │   └── DynamicChart.jsx   # Gráficos dinâmicos (Barras, Linhas e Donut)
-    │   └── ui/
-    │       ├── Header.jsx        # Barra superior com status do backend e badges
-    │       ├── ChatInput.jsx     # Campo de mensagem + sugestões rápidas
-    │       └── SecurityBadge.jsx # Card visual para bloqueios de segurança HTTP 403
-    └── lib/
-        └── formatters.js     # Utilitários de tradução, datas PT-BR e moedas
+1. The schema (DDL) is cached at startup and injected into the model's system instruction, so queries use real table/column names.
+2. The model must answer in structured JSON (`sql` + `sintese`).
+3. A **SQL Guard** (regex) rejects mutations and anything that doesn't start with `SELECT`/`WITH` (HTTP 403).
+4. The query runs on a **SQLite connection opened with `mode=ro`**, the real barrier if the guard is ever bypassed.
+
+> **Scope:** a functional prototype over a single synthetic table (`vendas`, 150 generated rows) and a single LLM call. There is no agent orchestration or RAG here. See [limitations and roadmap](docs/roadmap.md).
+
+## Architecture
+
+```mermaid
+flowchart LR
+    U[User question] --> FE[Next.js UI]
+    FE -->|POST /api/query| API[FastAPI]
+    API -->|question + cached DDL| LLM[Gemini API]
+    LLM -->|JSON: sql + summary| G{SQL Guard}
+    G -->|mutation / non-SELECT| E[HTTP 403]
+    G -->|SELECT / WITH| DB[(SQLite read-only)]
+    DB -->|columns + rows| API
+    API --> FE
+    FE --> R[Summary, table, charts, CSV]
 ```
 
----
+## Technical decisions
 
-## Stack Tecnológica
+| Component | Choice | Why |
+|-----------|--------|-----|
+| API | FastAPI + Pydantic v2 | Typed request/response validation and automatic OpenAPI docs |
+| LLM | Gemini via official `google-genai` SDK | Native JSON output (`response_mime_type`) and a generous free tier; model is configurable (`GEMINI_MODEL`) |
+| Database | SQLite | Zero setup for a reproducible demo; opened read-only for queries |
+| Schema context | DDL cached at startup | Avoids reading the database on every request; fits small schemas (see roadmap for RAG) |
+| Safety | Regex guard + `mode=ro` | The regex is a fast, explicit, testable first layer; the read-only driver is the hard guarantee |
+| Frontend | Next.js 16 (App Router), React 19, Tailwind 4, Recharts | Chat UI with dynamic charts; PT-BR formatting centralized in `lib/formatters.js` |
+| Tests | pytest, Gemini mocked | Deterministic, no network and no API key needed (also in CI) |
 
-| Camada | Tecnologia |
-|--------|-----------|
-| **Frontend** | Next.js 16 (App Router) + React 19 + Tailwind CSS v4 + Recharts + Lucide Icons |
-| **Backend** | FastAPI + Uvicorn + Pydantic v2 |
-| **IA** | Google Gemini API (`gemini-3-flash-preview`) via SDK oficial `google-genai` |
-| **Banco de Dados** | SQLite (`vendas_ficticias.db` — 150 registros fictícios gerados de forma idempotente) |
+## Quickstart
 
----
-
-## Pré-requisitos
-
-- **Python 3.11+**
-- **Node.js 18+ e npm**
-- **Chave de API do Google Gemini** (`GEMINI_API_KEY`)
-
-### Solução de Problemas no Windows
-
-Caso encontre dificuldades ao configurar a aplicação no Windows (PowerShell / CMD), siga as orientações abaixo:
-
-1. **Node.js ou npm não reconhecidos:**
-   Caso os comandos `node` ou `npm` não sejam identificados no terminal, instale a versão Node.js LTS utilizando o gerenciador de pacotes do Windows:
-   ```powershell
-   winget install OpenJS.NodeJS.LTS
-   ```
-   *(Feche e reabra o terminal após a conclusão da instalação).*
-
-2. **Erro de Execução de Scripts no PowerShell (`PSSecurityException`):**
-   Se o PowerShell bloquear a execução de scripts com erros de política de segurança (`ps1 cannot be loaded`), altere a política de execução para o usuário atual executando:
-   ```powershell
-   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-   ```
-
----
-
-## Setup e Execução
-
-### 1. Backend (FastAPI)
+Requirements: Python 3.11+, Node.js 18+, a [Gemini API key](https://aistudio.google.com/).
 
 ```bash
+# 1. Backend (terminal 1)
 cd backend
-
-# Instalar dependências
 pip install -r requirements.txt
+cp .env.example .env          # then set GEMINI_API_KEY
+python -m uvicorn app.main:app --reload     # http://localhost:8000  (docs at /docs)
 
-# Copiar o modelo de variáveis de ambiente (.env.example) removendo a extensão .example:
-cp .env.example .env     # Linux / macOS / Git Bash
-# Ou no Windows (PowerShell):
-copy .env.example .env
-
-# Abra o arquivo .env gerado e insira sua chave da Gemini API:
-# GEMINI_API_KEY=sua_chave_aqui
-
-# Executar a suíte de testes (opcional)
-python test_backend.py
-
-# Iniciar o servidor de desenvolvimento (porta 8000)
-python -m uvicorn main:app --reload
-```
-
-> **Nota:** Recomendamos utilizar o arquivo `.env.example` preenchendo a sua chave no `.env` gerado (removendo a extensão `.example`). Isso garante a codificação correta em **UTF-8**, evitando problemas de *encoding* (UTF-16LE) gerados por comandos como `echo > .env` no PowerShell do Windows. O banco `vendas_ficticias.db` é criado e populado automaticamente na primeira inicialização da aplicação. Se a sua chave atingir o limite de cota (HTTP 429), substitua a variável `GEMINI_API_KEY` em `backend/.env`.
-
-### 2. Frontend (Next.js)
-
-```bash
+# 2. Frontend (terminal 2)
 cd frontend
-
-# Instalar dependências
 npm install
-
-# Iniciar o servidor de desenvolvimento (porta 3000)
-npm run dev
+npm run dev                   # http://localhost:3000
 ```
 
-Acesse **http://localhost:3000** no seu navegador.
+The database is created and populated on first startup. Windows users: see [troubleshooting](docs/troubleshooting-windows.md). Docker support is planned.
 
----
+## Environment variables
 
-## Endpoints da API
+| Variable | Where | Required | Default | Description |
+|----------|-------|----------|---------|-------------|
+| `GEMINI_API_KEY` | `backend/.env` | yes | — | Gemini API key |
+| `GEMINI_MODEL` | `backend/.env` | no | `gemini-flash-latest` | Gemini model name |
+| `CORS_ORIGINS` | `backend/.env` | no | `http://localhost:3000,http://127.0.0.1:3000` | Allowed origins, comma-separated |
+| `DB_PATH` | `backend/.env` | no | `backend/vendas_ficticias.db` | SQLite file path |
+| `NEXT_PUBLIC_API_URL` | `frontend/.env.local` | no | `http://localhost:8000` | Backend base URL |
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| `GET` | `/api/health` | Health Check — Verifica se a API está operacional e se o DDL foi carregado no startup |
-| `POST` | `/api/query` | Recebe `{ "pergunta": "..." }`, consulta o Gemini, valida o SQL e retorna os dados brutos e a síntese |
-
-### Exemplo de Resposta (`POST /api/query`)
-
-```json
-{
-  "sql": "SELECT produto, SUM(quantidade) AS total_vendido FROM vendas GROUP BY produto ORDER BY total_vendido DESC LIMIT 3;",
-  "sintese": "Os três produtos mais vendidos em quantidade total são Notebook Gamer, Monitor 4K e Headset 7.1.",
-  "columns": ["produto", "total_vendido"],
-  "rows": [
-    ["Notebook Gamer", 42],
-    ["Monitor 4K", 38],
-    ["Headset 7.1", 31]
-  ],
-  "total_registros": 3
-}
-```
-
----
-
-## Segurança (SQL Mutation Guard)
-
-O backend possui uma camada dupla de proteção que bloqueia com status **HTTP 403** qualquer instrução que possa modificar o banco de dados (`DROP`, `INSERT`, `UPDATE`, `DELETE`, `ALTER`, `CREATE`, `TRUNCATE`, `REPLACE`, `MERGE`, etc.).
-
-1. **Inspecção Prévia de Intenção:** Intercepta comandos de mutação evidentes enviadas no próprio texto da pergunta antes de chamar o Gemini.
-2. **Validação de Sintaxe SQL:** Analisa via expressão regular se a query gerada começa obrigatoriamente com `SELECT` ou `WITH` e se contém apenas comandos de consulta de dados.
-
----
-
-## Testes
-
-O backend conta com uma suíte de testes cobrindo o guard de segurança e a integração dos endpoints:
+## Tests
 
 ```bash
 cd backend
-python test_backend.py
+pip install -r requirements-dev.txt
+pytest
 ```
 
----
+Covers the SQL Guard (allowed and blocked statements), the read-only connection, multi-statement rejection and the API endpoints (Gemini mocked).
 
-## Limitações Conhecidas & Evolução para Produção (Roadmap)
+## Repository layout
 
-Este projeto foi desenvolvido como um protótipo funcional de alta qualidade técnica. Para migração para ambiente de produção de grande escala, recomenda-se considerar:
+```
+backend/
+  app/
+    main.py              # FastAPI app, CORS, lifespan (DDL cache), endpoints
+    services/gemini.py   # prompt, Gemini call and SQL Guard
+    db/database.py       # idempotent data generation, DDL extraction, read-only execution
+  tests/                 # pytest suite
+frontend/                # Next.js app (chat, table, charts, CSV export)
+docs/                    # API reference, roadmap, Windows troubleshooting
+```
 
-1. **Paginação em Nível de Banco de Dados (`LIMIT` / `OFFSET`):**
-   - *Atual:* A query SQL executa no banco e a paginação gráfica é feita na camada de apresentação (10 itens por página).
-   - *Produção:* Injetar cláusulas de paginação diretamente na instrução SQL em buscas que retornem milhares de registros para otimizar transferência de dados e consumo de memória.
+More: [API reference](docs/api.md) · [Roadmap](docs/roadmap.md)
 
-2. **Pipeline RAG e Dicionário de Dados Avançado:**
-   - *Atual:* O esquema DDL completo da tabela é mantido em cache de memória e injetado no `system_instruction` do Gemini.
-   - *Produção:* Para esquemas complexos com dezenas de tabelas e relacionamentos, utilizar um mecanismo de RAG (Retrieval-Augmented Generation) com busca vetorial para recuperar dinamicamente apenas as tabelas pertinentes.
+## Authorship and scope
 
-3. **Timeouts e Limite de Recursos na Consulta SQL:**
-   - *Atual:* Consultas válidas são executadas diretamente pela conexão SQLite.
-   - *Produção:* Configurar limites de tempo de execução (*query timeout*) e isolamento de sessão no driver do banco de dados para prevenir negação de serviço por queries excessivamente pesadas.
+Built as a hands-on technical challenge and kept as a portfolio project. The code is my own work, developed with AI assistance (Claude) as a pair-programming tool. The data is entirely synthetic.
 
-4. **Camada de Caching (ex: Redis):**
-   - *Atual:* Toda pergunta gera uma requisição à API do Gemini e uma consulta ao SQLite.
-   - *Produção:* Implementar cache de respostas frequentes indexando hashes de perguntas e tabelas alteradas para reduzir custo de tokens e tempo de resposta.
+## License
+
+[MIT](LICENSE)
