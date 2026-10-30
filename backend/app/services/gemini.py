@@ -9,6 +9,8 @@ from fastapi import HTTPException
 
 load_dotenv()
 
+DEFAULT_GEMINI_MODEL = "gemini-flash-latest"
+
 
 def _criar_cliente() -> genai.Client:
     """
@@ -105,7 +107,7 @@ def _chamar_gemini(pergunta: str, ddl: str) -> dict:
 
     try:
         resposta = cliente.models.generate_content(
-            model="gemini-3-flash-preview",
+            model=os.getenv("GEMINI_MODEL", DEFAULT_GEMINI_MODEL),
             contents=pergunta,
             config=types.GenerateContentConfig(
                 system_instruction=_montar_system_instruction(ddl),

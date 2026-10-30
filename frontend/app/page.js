@@ -7,7 +7,7 @@ import QueryResponseView from '../components/QueryResponseView';
 import SecurityBadge from '../components/ui/SecurityBadge';
 import { Database, AlertCircle, RefreshCw, Trash2, MessageSquare, User, Bot, Loader2 } from 'lucide-react';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 export default function Home() {
   const [backendStatus, setBackendStatus] = useState('checking');
@@ -100,7 +100,7 @@ export default function Home() {
           id: messageId,
           question: questionText,
           timestamp: timeString,
-          generalError: 'Não foi possível conectar ao servidor backend (http://localhost:8000). Verifique se o servidor FastAPI está rodando.',
+          generalError: `Não foi possível conectar ao servidor backend (${API_BASE}). Verifique se o servidor FastAPI está rodando.`,
         },
       ]);
       setBackendStatus('offline');
@@ -123,7 +123,7 @@ export default function Home() {
           <div className="w-full p-4 rounded-xl bg-amber-950/30 border border-amber-500/30 text-amber-300 text-xs flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>O backend não está respondendo em <code>http://localhost:8000</code>. Inicie o FastAPI com <code>python -m uvicorn main:app --reload</code>.</span>
+              <span>O backend não está respondendo em <code>{API_BASE}</code>. Inicie o FastAPI com <code>python -m uvicorn app.main:app --reload</code>.</span>
             </div>
             <button
               onClick={checkBackendHealth}
