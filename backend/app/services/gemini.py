@@ -9,19 +9,28 @@ from fastapi import HTTPException
 
 load_dotenv()
 
+DEFAULT_GEMINI_MODEL = "gemini-3.5-flash"
+GEMINI_TIMEOUT_MS = 30_000  # evita requisições penduradas se o modelo não responder
+
 
 def _criar_cliente() -> genai.Client:
     """
     Instancia o cliente Gemini usando GEMINI_API_KEY do ambiente.
-    Falha em RuntimeError se a variável não estiver definida.
+    Responde HTTP 503 (com mensagem clara) se a variável não estiver definida.
     """
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
-        raise RuntimeError(
-            "Variável de ambiente GEMINI_API_KEY não encontrada. "
-            "Verifique o arquivo backend/.env"
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "GEMINI_API_KEY não configurada. "
+                "Crie o arquivo backend/.env a partir de backend/.env.example."
+            ),
         )
-    return genai.Client(api_key=api_key)
+    return genai.Client(
+        api_key=api_key,
+        http_options=types.HttpOptions(timeout=GEMINI_TIMEOUT_MS),
+    )
 
 
 _COMANDOS_PROIBIDOS = re.compile(
@@ -99,24 +108,13 @@ Se a pergunta pedir para deletar/alterar dados ou se não for possível responde
 """
 
 
-def processar_pergunta(pergunta: str, ddl: str) -> dict:
-    """Orquestra o fluxo Text-to-SQL: Gemini → parse JSON → validação de segurança."""
-
-    # Atalho de segurança: dispara o guard antes de chamar o Gemini quando a própria
-    # pergunta do usuário contém palavras-chave de mutação (botão de teste ou input malicioso).
-    if any(kw in pergunta.upper() for kw in ["DELETE", "DROP TABLE", "UPDATE VENDAS", "TRUNCATE"]):
-        sql_tentativa = (
-            pergunta
-            if pergunta.upper().startswith(("DELETE", "DROP", "UPDATE", "INSERT"))
-            else "DELETE FROM vendas WHERE 1=1"
-        )
-        validar_sql(sql_tentativa)
-
+def _chamar_gemini(pergunta: str, ddl: str) -> dict:
+    """Chama o Gemini e devolve o JSON já decodificado (`sql` e `sintese`), ainda sem validação."""
     cliente = _criar_cliente()
 
     try:
         resposta = cliente.models.generate_content(
-            model="gemini-3-flash-preview",
+            model=os.getenv("GEMINI_MODEL", DEFAULT_GEMINI_MODEL),
             contents=pergunta,
             config=types.GenerateContentConfig(
                 system_instruction=_montar_system_instruction(ddl),
@@ -131,7 +129,7 @@ def processar_pergunta(pergunta: str, ddl: str) -> dict:
         ) from exc
 
     try:
-        dados = json.loads(resposta.text.strip())
+        return json.loads(resposta.text.strip())
     except json.JSONDecodeError as exc:
         raise HTTPException(
             status_code=400,
@@ -140,6 +138,22 @@ def processar_pergunta(pergunta: str, ddl: str) -> dict:
                 f"Resposta recebida: {resposta.text.strip()[:300]}"
             ),
         ) from exc
+
+
+def processar_pergunta(pergunta: str, ddl: str) -> dict:
+    """Orquestra o fluxo Text-to-SQL: Gemini → parse JSON → validação de segurança."""
+
+    # Atalho de demonstração: dispara o guard antes de chamar o Gemini quando a própria
+    # pergunta do usuário contém palavras-chave de mutação (botão de teste ou input malicioso).
+    if any(kw in pergunta.upper() for kw in ["DELETE", "DROP TABLE", "UPDATE VENDAS", "TRUNCATE"]):
+        sql_tentativa = (
+            pergunta
+            if pergunta.upper().startswith(("DELETE", "DROP", "UPDATE", "INSERT"))
+            else "DELETE FROM vendas WHERE 1=1"
+        )
+        validar_sql(sql_tentativa)
+
+    dados = _chamar_gemini(pergunta, ddl)
 
     return {
         "sql": validar_sql(dados.get("sql", "").strip()),

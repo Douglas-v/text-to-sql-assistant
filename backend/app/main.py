@@ -1,3 +1,4 @@
+import os
 import sqlite3
 from contextlib import asynccontextmanager
 
@@ -5,12 +6,19 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from database import gerar_dados, get_ddl, executar_query
-from gemini_service import processar_pergunta
+from app.db.database import gerar_dados, get_ddl, executar_query
+from app.services.gemini import processar_pergunta
 
 
 # DDL carregado uma única vez no startup para evitar leituras repetidas ao SQLite por requisição.
 _ddl_cache: str = ""
+
+# Origens permitidas (separadas por vírgula). Default: frontend local do Next.js.
+_CORS_ORIGINS = [
+    o.strip()
+    for o in os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
+    if o.strip()
+]
 
 
 @asynccontextmanager
@@ -45,7 +53,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=_CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -109,7 +117,7 @@ async def query_endpoint(payload: QueryRequest):
 
     try:
         resultado_db = executar_query(sql_validado)
-    except sqlite3.Error as exc:
+    except (sqlite3.Error, sqlite3.Warning) as exc:
         raise HTTPException(
             status_code=500,
             detail=f"Erro ao executar a query no banco de dados: {str(exc)}",

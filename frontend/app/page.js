@@ -7,7 +7,18 @@ import QueryResponseView from '../components/QueryResponseView';
 import SecurityBadge from '../components/ui/SecurityBadge';
 import { Database, AlertCircle, RefreshCw, Trash2, MessageSquare, User, Bot, Loader2 } from 'lucide-react';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+async function fetchBackendStatus() {
+  try {
+    const res = await fetch(`${API_BASE}/api/health`);
+    if (!res.ok) return 'offline';
+    const data = await res.json();
+    return data.status === 'ok' ? 'online' : 'offline';
+  } catch {
+    return 'offline';
+  }
+}
 
 export default function Home() {
   const [backendStatus, setBackendStatus] = useState('checking');
@@ -17,21 +28,18 @@ export default function Home() {
 
   const checkBackendHealth = async () => {
     setBackendStatus('checking');
-    try {
-      const res = await fetch(`${API_BASE}/api/health`);
-      if (res.ok) {
-        const data = await res.json();
-        setBackendStatus(data.status === 'ok' ? 'online' : 'offline');
-      } else {
-        setBackendStatus('offline');
-      }
-    } catch (err) {
-      setBackendStatus('offline');
-    }
+    setBackendStatus(await fetchBackendStatus());
   };
 
+  // Verificação inicial: o estado já nasce como 'checking', então só atualiza quando a resposta chega.
   useEffect(() => {
-    checkBackendHealth();
+    let active = true;
+    fetchBackendStatus().then((status) => {
+      if (active) setBackendStatus(status);
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -100,7 +108,7 @@ export default function Home() {
           id: messageId,
           question: questionText,
           timestamp: timeString,
-          generalError: 'Não foi possível conectar ao servidor backend (http://localhost:8000). Verifique se o servidor FastAPI está rodando.',
+          generalError: `Não foi possível conectar ao servidor backend (${API_BASE}). Verifique se o servidor FastAPI está rodando.`,
         },
       ]);
       setBackendStatus('offline');
@@ -123,7 +131,7 @@ export default function Home() {
           <div className="w-full p-4 rounded-xl bg-amber-950/30 border border-amber-500/30 text-amber-300 text-xs flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>O backend não está respondendo em <code>http://localhost:8000</code>. Inicie o FastAPI com <code>python -m uvicorn main:app --reload</code>.</span>
+              <span>O backend não está respondendo em <code>{API_BASE}</code>. Inicie o FastAPI com <code>python -m uvicorn app.main:app --reload</code>.</span>
             </div>
             <button
               onClick={checkBackendHealth}
@@ -143,7 +151,7 @@ export default function Home() {
               Chat Interativo de <span className="gradient-text">Inteligência de Dados</span>
             </h2>
             <p className="text-sm text-slate-400 leading-relaxed">
-              Faça perguntas em linguagem natural e acompanhe todo o histórico da conversa com análises textuais geradas pelo <strong className="text-slate-200">Gemini 3 Flash</strong>, consultas SQL validadas, tabelas e gráficos dinâmicos.
+              Faça perguntas em linguagem natural e acompanhe todo o histórico da conversa com análises textuais geradas pelo <strong className="text-slate-200">IA</strong>, consultas SQL validadas, tabelas e gráficos dinâmicos.
             </p>
           </div>
         )}
@@ -216,7 +224,7 @@ export default function Home() {
               </div>
               <div className="glass-panel px-4 py-3 rounded-2xl text-xs text-blue-300 flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
-                <span>O Gemini está gerando a consulta SQL e sintetizando os dados...</span>
+                <span>A IA está gerando a consulta SQL e sintetizando os dados...</span>
               </div>
             </div>
           )}
@@ -224,14 +232,14 @@ export default function Home() {
           <div ref={chatBottomRef} />
         </div>
 
-        <div className="sticky bottom-4 z-40 pt-2">
+        <div className="sticky bottom-0 z-40 pt-8 pb-4 -mx-4 sm:-mx-6 px-4 sm:px-6 bg-gradient-to-t from-[#090d16] from-75% to-transparent">
           <ChatInput onSendQuery={handleSendQuery} isLoading={isLoading} />
         </div>
 
       </main>
 
       <footer className="border-t border-slate-800/80 py-4 text-center text-xs text-slate-500">
-        <p>Data Intelligence Assistant — Text-to-SQL (FastAPI + Next.js + Gemini)</p>
+        <p>Data Intelligence Assistant — Text-to-SQL (FastAPI + Next.js)</p>
       </footer>
     </div>
   );
