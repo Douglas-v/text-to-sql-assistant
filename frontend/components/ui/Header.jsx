@@ -1,7 +1,7 @@
 'use client';
 
 
-import { Database, Sparkles, Activity, ShieldCheck } from 'lucide-react';
+import { Database, Activity, ShieldCheck } from 'lucide-react';
 
 export default function Header({ backendStatus }) {
   return (
@@ -30,12 +30,6 @@ export default function Header({ backendStatus }) {
 
         {/* Badges & Health Status */}
         <div className="flex items-center gap-3 text-xs">
-          {/* AI Model Badge */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 text-slate-300">
-            <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-            <span className="font-medium">Gemini Flash</span>
-          </div>
-
           {/* Security Guard Badge */}
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 text-slate-300">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />

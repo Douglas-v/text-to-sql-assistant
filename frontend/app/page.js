@@ -151,7 +151,7 @@ export default function Home() {
               Chat Interativo de <span className="gradient-text">Inteligência de Dados</span>
             </h2>
             <p className="text-sm text-slate-400 leading-relaxed">
-              Faça perguntas em linguagem natural e acompanhe todo o histórico da conversa com análises textuais geradas pelo <strong className="text-slate-200">Gemini Flash</strong>, consultas SQL validadas, tabelas e gráficos dinâmicos.
+              Faça perguntas em linguagem natural e acompanhe todo o histórico da conversa com análises textuais geradas pelo <strong className="text-slate-200">IA</strong>, consultas SQL validadas, tabelas e gráficos dinâmicos.
             </p>
           </div>
         )}
@@ -224,7 +224,7 @@ export default function Home() {
               </div>
               <div className="glass-panel px-4 py-3 rounded-2xl text-xs text-blue-300 flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
-                <span>O Gemini está gerando a consulta SQL e sintetizando os dados...</span>
+                <span>A IA está gerando a consulta SQL e sintetizando os dados...</span>
               </div>
             </div>
           )}
@@ -232,14 +232,14 @@ export default function Home() {
           <div ref={chatBottomRef} />
         </div>
 
-        <div className="sticky bottom-4 z-40 pt-2">
+        <div className="sticky bottom-0 z-40 pt-8 pb-4 -mx-4 sm:-mx-6 px-4 sm:px-6 bg-gradient-to-t from-[#090d16] from-75% to-transparent">
           <ChatInput onSendQuery={handleSendQuery} isLoading={isLoading} />
         </div>
 
       </main>
 
       <footer className="border-t border-slate-800/80 py-4 text-center text-xs text-slate-500">
-        <p>Data Intelligence Assistant — Text-to-SQL (FastAPI + Next.js + Gemini)</p>
+        <p>Data Intelligence Assistant — Text-to-SQL (FastAPI + Next.js)</p>
       </footer>
     </div>
   );

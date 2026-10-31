@@ -70,7 +70,7 @@ function QueryResponseContent({ responseData, question }) {
           </div>
           <div className="space-y-1">
             <h3 className="text-xs uppercase font-bold tracking-wider text-blue-300">
-              Síntese dos Dados (Inteligência Gemini)
+              Síntese dos Dados
             </h3>
             <p className="text-sm text-slate-200 leading-relaxed font-normal">
               {sintese}
