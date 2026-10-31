@@ -14,14 +14,16 @@
 
 ## Demo
 
-![Chart view: summary, generated SQL and dynamic chart](docs/img/01-chat-grafico.png)
+![Question answered with summary, generated SQL and bar chart](docs/img/01-grafico-barras.png)
+
+![HTTP 403: destructive request blocked by the SQL Guard](docs/img/04-bloqueio-seguranca.png)
 
 <details>
-<summary>More screenshots</summary>
+<summary>More examples</summary>
 
-![Paginated table with CSV export](docs/img/02-tabela.png)
+![Month-over-month comparison generated with a LAG window function (line chart)](docs/img/02-grafico-linha-lag.png)
 
-![HTTP 403 block by the SQL Guard](docs/img/03-bloqueio-seguranca.png)
+![Monthly revenue evolution (bar chart)](docs/img/03-evolucao-mensal.png)
 
 </details>
 

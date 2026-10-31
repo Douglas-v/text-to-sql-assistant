@@ -14,14 +14,16 @@
 
 ## Demonstração
 
-![Visão em gráfico: síntese, SQL gerado e gráfico dinâmico](docs/img/01-chat-grafico.png)
+![Pergunta respondida com síntese, SQL gerado e gráfico de barras](docs/img/01-grafico-barras.png)
+
+![HTTP 403: requisição destrutiva bloqueada pelo SQL Guard](docs/img/04-bloqueio-seguranca.png)
 
 <details>
-<summary>Mais capturas de tela</summary>
+<summary>Mais exemplos</summary>
 
-![Tabela paginada com exportação CSV](docs/img/02-tabela.png)
+![Comparação mês a mês gerada com função de janela LAG (gráfico de linha)](docs/img/02-grafico-linha-lag.png)
 
-![Bloqueio HTTP 403 pelo SQL Guard](docs/img/03-bloqueio-seguranca.png)
+![Evolução mensal do faturamento (gráfico de barras)](docs/img/03-evolucao-mensal.png)
 
 </details>
 
